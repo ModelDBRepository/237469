@@ -1,0 +1,286 @@
+<html><pre>
+Python and NEURON scripts for running network simulations of reduced-morphology layer V pyramidal cells.
+
+Tuomo Maki-Marttunen, 2015-2018
+CC BY 4.0
+
+HOC-commands for simulations including in vivo-like synaptic firing based on (Hay & Segev 2015, "Dendritic excitability and gain control
+                                                                              in recurrent cortical microcircuits", Cerebral Cortex
+                                                                              25(10): 3561-3571)
+Library of variants based on (Maki-Marttunen et al. 2016, "Functional Effects of Schizophrenia-Linked Genetic Variants on Intrinsic
+                              Single-Neuron Excitability: A Modeling Study", Biol Psychiatry Cogn Neurosci Neuroimaging. 2016 Jan
+                              1;1(1):49-59.
+
+Files included:
+ CaDynamics_E2.mod                   #mod file for Intracellular Ca dynamics
+ Ca_HVA.mod                          #mod file for HVA Ca currents
+ Ca_LVAst.mod                        #mod file for LVA Ca currents
+ Ih.mod                              #mod file for HCN current
+ Im.mod                              #mod file for M-current
+ K_Pst.mod                           #mod file for persistent K current
+ K_Tst.mod                           #mod file for transient K current
+ NaTa_t.mod                          #mod file for transient Na current
+ Nap_Et2.mod                         #mod file for persistent Na current
+ ProbAMPANMDA2.mod                   #mod file for probabilistic glutamatergic synapse
+ ProbAMPANMDA2group.mod              #mod file for probabilistic glutamatergic synapse group
+ ProbAMPANMDA2groupdet.mod           #mod file for probabilistic glutamatergic synapse group with pre-determined activation times
+ ProbUDFsyn2.mod                     #mod file for probabilistic GABAergic synapse 
+ ProbUDFsyn2group.mod                #mod file for probabilistic GABAergic synapse group
+ ProbUDFsyn2groupdet.mod             #mod file for probabilistic GABAergic synapse group with pre-determined activation times
+ README.html                         #This file
+ SK_E2.mod                           #mod file for SK current
+ SKv3_1.mod                          #mod file for Kv3.1 potassium current
+ approxhaynetstuff.py                #Python library for running simulations with reduced-morphology L5PCs
+ calcEEG.py                          #Python file for predicting the EEG signal. For spikes*.sav that have already been combined
+ calcEEG_uncombined.py               #Python file for the EEG signal. For spikes*.sav that have not been combined (assumes they were run single-thread)
+ calcmutgains.py                     #Python file for running non-oscillatory simulations of single variants
+ calcmutgains_comb.py                #Python file for running non-oscillatory simulations of variant combinations
+ calcmutoscs.py                      #Python file for running oscillatory simulations of single variants
+ calcmutoscs_comb.py                 #Python file for running oscillatory simulations of variant combinations
+ calcspectra.py                      #Python file for calculating the power spectrum of the population spike trains (single variants)
+ calcspectra_comb.py                 #Python file for calculating the power spectrum of the population spike trains (variant combinations)
+ combinemutgains_parallel.py         #Python file for combining simulation results (single-variant, non-oscillatory)
+ combinemutgains_parallel_comb.py    #Python file for combining simulation results (variant combination, non-oscillatory)
+ combinemutgains_parallel_withLFP.py #Python file for combining simulation results (single-variant, non-oscillatory, with recording of dipole moments)
+ combinemutoscs_parallel.py          #Python file for combining simulation results (single-variant, oscillatory)
+ combinemutoscs_parallel_comb.py     #Python file for combining simulation results (variant combination, oscillatory)
+ drawfig1ab.py                       #Python file for drawing simulated results (Fig. 1A--B)
+ drawfig1c.py                        #Python file for drawing simulated results (Fig. 1C)
+ drawfig2ab.py                       #Python file for drawing simulated results (Fig. 2A--B)
+ drawfig2c.py                        #Python file for drawing simulated results (Fig. 2C)
+ drawstationary_EEG.py               #Python file for plotting single-cell simulation results with dipole moments and EEG signal (Fig. 4A--C)
+ drawstationary_EEG_pop.py           #Python file for plotting network simulation results with dipole moments and EEG signal (Fig. 4D--F)
+ mutation_stuff.py                   #Python library for the effects of SNP-like SCZ-associated variants
+ mytools.py                          #Python library, general tools
+ runmanycellsLFP.py                  #Python file for running a single cell simulation with recording of dipole moments
+ runsinglecellLFP.py                 #Python file for running a network simulation with recording of dipole moments
+ saveisidists.py                     #Python file for saving the ISI distributions (needed for making isidist*.sav)
+ savespikesshufflephases.py          #Python file for saving oscillatory Poisson ISIs (needed for making isidist*.sav)
+ simosc_parallel.py                  #Python library, main simulation code for oscillatory simulations (single variants)
+ simosc_parallel_comb_varconn.py     #Python library, main simulation code for oscillatory simulations (variant combinations)
+ simseedburst_func.py                #Python library, main simulation code for nonoscillatory simulations (single variants)
+ simseedburst_func_comb_varconn.py   #Python library, main simulation code for nonoscillatory simulations (variant combinations)
+ simseedburst_func_withLFP.py        #Python library, main simulation code for nonoscillatory simulations, including the recording of dipole moments
+ models                              #Directory with HOC files
+ pars_withmids_combfs_final.sav      #Data file with parameters for the reduced-morphology L5PCs
+ scalings_cs.sav                     #Data file with scaling coefficients for each variant of mutation_stuff.py
+
+
+To run NEURON simulation of the network model and plot the results (Figure 1), run the following commands:
+
+################ Initialization ################
+<font color=green>
+NUMP=1                  #How many CPUs do you want to use in parallel? Change this to speed up simulations (in single thread, one
+                        #network simulation took me approximately 2 hours).
+LASTSEED=0              #In this example, only one repetition used in most simulations. Note that in the article normally 5-15
+                        #repetitions used, and at times much larger. Change this to get more accurate predictions.
+nrnivmodl               #Compile the mechanisms
+</font>
+
+########## Simulations for Fig 1 A--B ##########
+# If your NEURON installation does not support running scripts in the "nrniv -python" manner, try either of the following:
+# 1) Replace "nrniv" by the full path to the binary (typically NEURON_INSTALLATION_DIRECTORY/nrn/x86_64/bin/nrniv
+# 2) Replace "mpirun -np $NUMP nrniv -python -mpi PYTHON_SCRIPT.py" by a single-CPU run "python PYTHON_SCRIPT.py NULL NULL NULL".
+#    The three gibberish arguments are necessary as the scripts (calcmutgains*.py and calmutoscs*.py) consider the arguments from
+#    the 4th argument on. Thus, the first simulation below would be "<font color=green>python calcmutgains.py NULL NULL NULL 0 $irate 0</font>"
+<font color=green>
+rates=( 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 )                                               #Rate coefficient array
+seeds=( `seq 1 200` )                                                                                       #Seed array
+for (( irate=0; irate<${#rates[@]}; irate++ ));                                                             #Go through the rate array
+do       
+  mpirun -np $NUMP nrniv -python -mpi calcmutgains.py 0 $irate 0                                            #Main simulation (control)
+  python combinemutgains_parallel.py 0 $irate 0 $NUMP                                                       #Combine results (needed if
+                                                                                                            #  many CPUs were used)
+  echo "rm spikes_parallel_5_11000_0_0.00039_0.0006_${rates[irate]}_1.07_1.07_${seeds[iseed]}_*_of_150.sav" #Remove the uncombined
+  rm spikes_parallel_5_11000_0_0.00039_0.0006_${rates[irate]}_1.07_1.07_${seeds[iseed]}_*_of_150.sav        #  data files.
+done
+
+mpirun -np $NUMP nrniv -python -mpi calcmutgains.py 70 6 0                                                  #Main simulation (variant)
+python combinemutgains_parallel.py 70 6 0 $NUMP                                                             #Combine results
+echo "rm spikes_parallel_5_11000_70_0.00039_0.0006_1.0_1.07_1.07_${seeds[iseed]}_*_of_150.sav"              #Remove the uncombined
+rm spikes_parallel_5_11000_70_0.00039_0.0006_1.0_1.07_1.07_${seeds[iseed]}_*_of_150.sav                     #  data files.
+
+python drawfig1ab.py                                                                                        #Plot the results (Fig1A,B)
+</font>
+
+############ Simulations for Fig 1 C ###########
+#  Note that simulations in ../haymod have to  #
+#            be performed in advance           #
+################################################
+<font color=green>
+MS=( 0 125 126 127 128 189 190 191 192 293 294 295 296 313 314 315 316 333 334 335 336 369 370 371 372 421 422 423 424 441 442 443 444 )
+MCS=( 0 1 2 3 )
+for iseed in `seq 0 $LASTSEED`;
+do
+  #Single-variant simulations:
+  for (( iimut=0; iimut<${#MS[@]}; iimut++ ));
+  do
+    imut=${MS[iimut]}
+    for (( irate=0; irate<${#rates[@]}; irate++ ));
+    do
+      mpirun -np $NUMP nrniv -python -mpi calcmutgains.py $imut $irate $iseed
+      python combinemutgains_parallel.py $imut $irate $iseed $NUMP
+      echo "rm spikes_parallel_5_11000_${imut}_0.00039_0.0006_${rates[irate]}_1.07_1.07_${seeds[iseed]}_*_of_150.sav"
+      rm spikes_parallel_5_11000_${imut}_0.00039_0.0006_${rates[irate]}_1.07_1.07_${seeds[iseed]}_*_of_150.sav
+    done
+  done
+
+  #Combination simulations:
+  for (( iimut=0; iimut<${#MCS[@]}; iimut++ ));
+  do
+    imut=${MCS[iimut]}
+    for (( irate=0; irate<${#rates[@]}; irate++ ));
+    do
+      mpirun -np $NUMP nrniv -python -mpi calcmutgains_comb.py $imut $irate $iseed
+      python combinemutgains_parallel_comb.py $imut $irate $iseed $NUMP
+      echo "rm spikes_parallel_5_11000_comb${imut}_5.0_NsynE10000_NsynI2500_0.00039_0.0006_${rates[irate]}_1.07_1.07_${seeds[iseed]}_*_of_150.sav"
+      rm spikes_parallel_5_11000_comb${imut}_5.0_NsynE10000_NsynI2500_0.00039_0.0006_${rates[irate]}_1.07_1.07_${seeds[iseed]}_*_of_150.sav
+    done
+  done
+done
+
+python drawfig1c.py
+</font>
+
+
+########## Simulations for Fig 2 A--B ##########
+
+# In order to model the L5PC network response to oscillations, we need the cumulative probability functions
+# of intervals between synaptic activation times (these do not anymore follow exponential distribution as
+# in the case of stationary Poisson inputs). The values of the cumulative probability functions are pre-saved
+# in files isidists_XXX_0.25.sav (0.25 referring to the fact that the lambda term oscillated +-25%) for each
+# phase of the oscillation; these files can be downloaded in Open Science Framework (https://osf.io/2k5ub/).
+# Alternatively, the event times of oscillatory Poisson processes could be generated on the fly in the main
+# simulation script using mytools.oscillatorypoissontimeseries(), but if the same oscillation frequency is
+# used many times, it turns out to be more efficient to save the cumulative probability functions of the
+# inter-event intervals for each phase of the oscillation and sample from that distribution.
+
+<font color=green>
+wget https://osf.io/zv29k/download # zipped file size 200 MB
+mv download isidists.tar.gz        # This is the original name of the file
+tar xvfz isidists.tar.gz           # NB: This will need an extra 4 GB of space! If you only want to simulate
+                                   # panel B, only extract isidists_1.5_0.25.sav, and if you
+                                   # want to simulate panel A but not C, choose the isidist files of the  17
+                                   # frequencies needed and remove the rest
+</font>
+# Alternatively, these files can be generated from scratch as follows (this is a heavy operation):
+<font color=green>
+FREQARRAY=( 0.5 0.625 0.75 0.875 1.0 1.25 1.5 1.75 2.0 2.5 3.0 3.5 4.0 5.0 7.5 10.0 15.0 )
+for (( iosc=0; iosc<${#FREQARRAY[@]}; iosc++ ));                                                                      #Go through the frequency array
+do       
+  for (( iphase=0; iphase<50; iphase++ ));                                                                            #Go through 50 phases
+  do                                                                                                                  #For each of the 50 phases, simulate
+    python savespikesshufflephases.py $iphase 12000 ${FREQARRAY[iosc]} 0.25                                           #oscillatory Poisson trains of events.
+  done                                                                                                                #
+  python saveisidists.py ${FREQARRAY[iosc]} 0.25                                                                      #Save the inter-event distributions
+done                                                                                                                  #to files isidists_$freq_0.25.sav
+
+</font>
+# The simulation of L5PC network activity in the presence of oscillations in the backround synaptic firing
+# starts here.
+<font color=green>
+FREQARRAY=( 0.5 0.625 0.75 0.875 1.0 1.25 1.5 1.75 2.0 2.5 3.0 3.5 4.0 5.0 7.5 10.0 15.0 )
+seeds=( `seq 1 200` )                                                                                                 #Seed array
+for (( iosc=0; iosc<${#FREQARRAY[@]}; iosc++ ));                                                                      #Go through the frequency array
+do       
+  mpirun -np $NUMP nrniv -python -mpi calcmutoscs.py 0 $iosc 0                                                        #Main simulation (control)
+  python combinemutoscs_parallel.py 0 $iosc 0 $NUMP                                                                   #Combine results (needed if
+                                                                                                                      #  many CPUs were used)
+  echo "rm spikes_parallel_osc${FREQARRAY[iosc]}_5_11000_0_0.00039_0.0006_1.0_1.07_1.07_${seeds[iseed]}_*_of_150.sav" #Remove the uncombined
+  rm spikes_parallel_osc${FREQARRAY[iosc]}_5_11000_0_0.00039_0.0006_1.0_1.07_1.07_${seeds[iseed]}_*_of_150.sav        #  data files.
+done
+
+mpirun -np $NUMP nrniv -python -mpi calcmutoscs.py 70 6 0                                                             #Main simulation (variant)
+python combinemutoscs_parallel.py 70 6 0 $NUMP                                                                        #Combine results
+echo "rm spikes_parallel_osc1.5_5_11000_70_0.00039_0.0006_1.0_1.07_1.07_${seeds[iseed]}_*_of_150.sav"  #Remove the uncombined
+rm spikes_parallel_osc1.5_5_11000_70_0.00039_0.0006_1.0_1.07_1.07_${seeds[iseed]}_*_of_150.sav         #  data files.
+
+for (( iosc=0; iosc<${#FREQARRAY[@]}; iosc++ ));                                                                      #Go through the frequency array
+do
+  python calcspectra.py 0 ${FREQARRAY[iosc]}                                                                          #Calculate the power spectrum of the control
+                                                                                                                      #network's population spike train response
+                                                                                                                      #Saves spectrum_freq*_0.sav
+done 
+python calcspectra.py 70 1.5                                                                                          #Calculate the spectra for variant network
+                                                                                                                      #Saves spectrum_freq1.5_70.sav
+python drawfig2ab.py                                                                                                  #Plot the results (Fig1A,B)
+</font>
+
+############ Simulations for Fig 2 C ###########
+<font color=green>
+MS=( 0 125 126 127 128 189 190 191 192 293 294 295 296 313 314 315 316 333 334 335 336 369 370 371 372 421 422 423 424 441 442 443 444 )
+MCS=( 0 1 2 3 )
+for iseed in `seq 0 $LASTSEED`;
+do
+  #Single-variant simulations:
+  for (( iimut=0; iimut<${#MS[@]}; iimut++ ));
+  do
+    imut=${MS[iimut]}
+    for (( iosc=0; iosc<${#FREQARRAY[@]}; iosc++ ));                                                                  
+    do
+      mpirun -np $NUMP nrniv -python -mpi calcmutoscs.py $imut $iosc $iseed
+      python combinemutoscs_parallel.py $imut $iosc $iseed $NUMP
+      echo "rm spikes_parallel_osc${FREQARRAY[iosc]}_5_11000_${imut}_0.00039_0.0006_1.0_1.07_1.07_${seeds[iseed]}_*_of_150.sav"
+      rm spikes_parallel_osc${FREQARRAY[iosc]}_5_11000_${imut}_0.00039_0.0006_1.0_1.07_1.07_${seeds[iseed]}_*_of_150.sav
+    done
+  done
+
+  #Combination simulations:
+  for (( iimut=0; iimut<${#MCS[@]}; iimut++ ));
+  do
+    imut=${MCS[iimut]}
+    for (( iosc=0; iosc<${#FREQARRAY[@]}; iosc++ ));                                                                  
+    do
+      mpirun -np $NUMP nrniv -python -mpi calcmutoscs_comb.py $imut $iosc $iseed
+      python combinemutoscs_parallel_comb.py $imut $iosc $iseed $NUMP
+      echo "rm spikes_parallel_osc${FREQARRAY[iosc]}_5_11000_comb${imut}_5.0_NsynE10000_NsynI2500_0.00039_0.0006_1.0_1.07_1.07_${seeds[iseed]}_*_of_150.sav"
+      rm spikes_parallel_osc${FREQARRAY[iosc]}_5_11000_comb${imut}_5.0_NsynE10000_NsynI2500_0.00039_0.0006_1.0_1.07_1.07_${seeds[iseed]}_*_of_150.sav
+    done
+  done
+done
+
+#Calculate the spectra for each variant and each frequency:
+for (( iosc=0; iosc<${#FREQARRAY[@]}; iosc++ ));
+do
+  for (( iimut=0; iimut<${#MS[@]}; iimut++ ));
+  do
+    python calcspectra.py ${MS[iimut]} ${FREQARRAY[iosc]}         #Saves spectrum_freq*_${MS[iimut]}.sav
+  done
+  python calcspectra_comb.py ${FREQARRAY[iosc]}                   #Saves spectrum_freq*_comb0.sav
+done
+
+python drawfig2c.py
+</font>
+
+########## Simulations for Fig 4 A--F ##########
+
+# In order to model the EEG signature of the neuron population, we use a slightly modified simulation script
+# (simseeburst_func_withLFP.py). This script uses the functionality of the LFPy toolbox, where the main
+# NEURON simulation loop is replaced by our own step-by-step simulation loop that calculates and stores all
+# dipole moments. This script does not need LFPy to be installed, but the parts of LFPy that were needed are
+# hard-coded in the script. From the output of this script, we calculate the EEG signature of the population.
+# This, by contrast, requires that LFPy be installed (see https://lfpy.github.io/)
+#
+# Note that while the above parts work fine with NEURON 7.4, the part below requires NEURON 7.5 due to the
+# use_fast_imem() functionality of the CVode.
+
+<font color=green>
+python runsinglecellLFP.py      # This is a rather light operation as it is only one cell simulated for 11000 ms.
+python calcEEG_uncombined.py spikes_parallel_5_11000_0_0.00039_0.0006_1.0_1.07_1.07_1_0_of_1_withLFP.sav
+                                # Calculates the EEG signature using the head model of four concentric spheres.
+                                # Saves to spikes_parallel_5_11000_0_0.00039_0.0006_1.0_1.07_1.07_1_0_of_1_withLFP_EEG.sav
+python drawstationary_EEG.py 1  # Draws the results (Fig 4 A--C)
+
+python runmanycellsLFP.py                  # This takes several hours on an average PC. To speed up use an alternative
+                                           # mpirun -np $NUMP nrniv -python -mpi runmanycellsLFP.py (but then the
+                                           # NUMP argument in the following line should also be set to $NUMP, i.e.
+                                           #python combinemutgains_parallel_withLFP.py 0 6 0 $NUMP
+python combinemutgains_parallel_withLFP.py 0 6 0 1
+                                           # Saves spikes_parallel150_mutID0_1.0_gNoise1.07_gsyn1.07_seed1_withLFP.sav 
+python calcEEG.py spikes_parallel150_mutID0_1.0_gNoise1.07_gsyn1.07_seed1_withLFP.sav
+                                           # Calculates the EEG signature using the head model of four concentric spheres.
+                                           # Saves to spikes_parallel150_mutID0_1.0_gNoise1.07_gsyn1.07_seed1_withLFP_EEG.sav
+python drawstationary_EEG_pop.py 1         # Draws the results (Fig 4 D--E)
+</font>
+
+</pre></html>

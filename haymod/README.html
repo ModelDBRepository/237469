@@ -1,0 +1,111 @@
+<html><pre>
+Python and NEURON scripts for running prepulse inhibition experiments in layer V pyramidal cells.
+
+Tuomo Maki-Marttunen, 2015-2018
+CC BY 4.0
+
+HOC-commands for simulations based on scripts by E. Hay (Hay et al. 2011, Models of Neocortical Layer
+                                                                          5b Pyramidal Cells Capturing a Wide Range of 
+                                                                          Dendritic and Perisomatic Active Properties,
+                                                                          PLoS Comput Biol 7:e1002107)
+
+Library of variants based on (Maki-Marttunen et al. 2016, "Functional Effects of Schizophrenia-Linked Genetic Variants on Intrinsic
+                              Single-Neuron Excitability: A Modeling Study", Biol Psychiatry Cogn Neurosci Neuroimaging. 2016 Jan
+                              1;1(1):49-59.
+
+Files included:
+ README.html                          #This file
+ models                               #Directory with the hoc files
+ morphologies                         #Directory with the asc files
+ CaDynamics_E2.mod                    #mod file for Intracellular Ca dynamics
+ Ca_HVA.mod                           #mod file for HVA Ca currents
+ Ca_LVAst.mod                         #mod file for LVA Ca currents
+ epsp.mod                             #mod file for EPSPs
+ Ih.mod                               #mod file for HCN current
+ Im.mod                               #mod file for M-current
+ K_Pst.mod                            #mod file for persistent K current
+ K_Tst.mod                            #mod file for transient K current
+ NaTa_t.mod                           #mod file for transient Na current
+ Nap_Et2.mod                          #mod file for persistent Na current
+ SK_E2.mod                            #mod file for SK current
+ SKv3_1.mod                           #mod file for Kv3.1 potassium current
+ calcifcurves.py                      #Python script for calculating the fI curves (single variants)
+ calcifcurves_comb.py                 #Python script for calculating the fI curves (variant combinations)
+ collectppispthrcoeff300_relthr.py    #Python script for collecting results of PPI experiment (single variants)
+ collectscalings_cs.py                #Python script for collecting scaling coefficients for single variants
+ collectthresholddistalamps300.py     #Python script for collecting results of thresholds at rest (single variants)
+ drawppiranges.py                     #Python script for plotting the PPI window ranges for single variants
+ drawsubthppiamps_comb.py             #Python script for drawing the result figure for combination of variants
+ findsubthppi300_relthr.py            #Python script for calculating the PPI thresholds (single variants)
+ findsubthppi300_relthr_comb_one.py   #Python script for calculating the PPI thresholds (variant combinations)
+ findthresholddistalamp300_control.py #Python script for calculating the threshold at rest (control)
+ findthresholddistalamps300.py        #Python script for calculating the thresholds at rest (single variants)
+ findthresholddistalamps300_comb.py   #Python script for calculating the thresholds at rest (variant combinations)
+ mutation_stuff.py                    #Python library for the effects of SNP-like SCZ-associated variants
+ mytools.py                           #Python library, general tools
+ ppi300_relthr_comb_recordSK.py       #Python script for calculating the SK currents following a sub-threshold prepulse
+ runcontrol.py                        #Python script for running control neuron data (needed for scaling)
+ savesynapselocations300.py           #Python script for distributing the 3000 synapses along the apical dendrite
+ scalemutations_cs.py                 #Python script for downscaling the variants
+ testsubthppi300_comb_fixed.py        #Python script for running simulations with fixed amplitudes of synaptic currents
+ mutindexlist.sav                     #List of indices (which mutation ID here corresponds to which mutation IDs in ../approxhaynet)
+ presaved.tar.gz                      #Pre-saved data files
+
+To run NEURON simulation of the network model and plot the results (Figure 8), run the following commands:
+
+################ Initialization ################
+<font color=green>
+nrnivmodl                #Compile the mechanisms
+</font>
+############ Fetch pre-saved data ##############
+<font color=green>
+tar xvfz presaved.tar.gz #Untars ppispthrcoeff300_relthr_cs.sav, ppispthrcoeff300_relthr_scaledonly_cs0_comb_iiter*.sav, scalings_cs.sav, synlocs300.sav, thresholddistalamp300_cs0_comb.sav
+</font>
+
+# Or, do the following: (note that not everything is needed for plotting the Figure 8, that's why using the presaved.tar.gz is encouraged)
+<font color=green>
+python runcontrol.py                              # Saves control_cs.sav, needed by scalemutations_cs.py
+python savesynapselocations300.py                 # Distributes 3000 synapses on the apical dendrite (starting from 300um so that no compartment has too many synapses). Saves synlocs300.sav which is needed by many scripts.
+for (( imut=0; imut<115; imut++ ));
+do
+  python scalemutations_cs.py $imut               # Saves scalings_cs0_${imut}.sav, needed by collectscalings_cs.py
+done
+python collectscalings_cs.py                      # Collects the scalings to scalings_cs.sav, needed by almost all scripts
+python findthresholddistalamp300_control.py       # Calculate the threshold at rest for control L5PC. Saves thresholddistalamp300_control.sav which is needed by many scripts.
+for (( imut=0; imut<115; imut++ ));
+do
+  python findthresholddistalamps300.py $imut      # Calculate the threshold at rest for a single variant. Saves thresholddistalamp300_cs0_*.sav which is needed by collectthresholddistalamps300.py
+done
+python collectthresholddistalamps300.py           # Collect the thresholds at rest for single variants. Saves thresholddistalamp300_cs.sav which is needed by findsubthppi300_relthr.py and drawsubthppiamps_comb.py
+
+for (( imut=0; imut<115; imut++ ));               # This is the heavy part, should be parallelized to 115 processes, or even more (each iter separately,
+do                                                #   but that would require some adjustments to the scripts)
+  python findsubthppi300_relthr.py $imut          # Calculate the threshold for second inputs on a time range 0-500 ms for a single variant. Saves ppispthrcoeff300_relthr_scaledonly_cs0_*.sav
+done
+python collectppispthrcoeff300_relthr.py          # Collect the PPI thresholds for single variants. Saves ppispthrcoeff300_relthr_cs.sav, needed by drawsubthppiamps_comb.py
+python findthresholddistalamps300_comb.py         # Calculate the threshold at rest for variant combinations. Saves thresholddistalamp300_cs0_comb.sav which is needed by drawsubthppiamps_comb.py
+for (( imut=0; imut<4; imut++ ));
+do
+  python findsubthppi300_relthr_comb_one.py $imut # Calculate the threshold for second inputs on a time range 0-500 ms for a variant combination. Saves ppispthrcoeff300_relthr_scaledonly_cs0_comb_iiter*.sav,
+done                                              #   needed by drawsubthppiamps_comb.py
+</font>
+
+####### Simulations for insets of Fig 1C #######
+<font color=green>
+MS=( 0 31 47 73 78 83 92 105 110 )                # These correspond to the variants 0, 1, 2, 3, 4, 125, 126, 127, 128, 189, 190, 191, 192, 293, 294, 295, 296, 313, 314, 315, 316,
+                                                  # 333, 334, 335, 336, 369, 370, 371, 372, 421, 422, 423, 424, 441, 442, 443 and 444 in the folder ../approxhaynet_mut
+for (( iimut=0; iimut<${#MS[@]}; iimut++ ));
+do
+  imut=${MS[iimut]}
+  python calcifcurves.py $imut                    # Run the experiment where the neuron (without or with a single variant) is stimulated with a DC with amplitude 0.35-1.3nA and the number of spikes is recorded
+done                                              # Running the script takes about an hour or two on a standard computer.
+python calcifcurves_comb.py                       # Run the experiment where the neuron with a variant combination is stimulated with a DC with amplitude 0.35-1.3nA and the number of spikes is recorded
+</font>
+
+############# Simulations for Fig 8 ############
+<font color=green>
+python testsubthppi300_comb_fixed.py              # Runs the simulations with combinations of variants and fixed amplitudes of second apical stimulus. Saves to subthppitest_cs0_comb_iiter*.sav.
+python drawsubthppiamps_comb.py                   # Plots subthppiamps_relthr_comb.eps using presaved files, then loads subthppitest_cs0_comb_iiter*.sav and plots subthppiamps_relthr_comb_withV.eps
+</font>
+
+</pre></html>

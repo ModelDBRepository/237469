@@ -1,0 +1,8 @@
+cp ../haymod3e2/scalings_cs.sav .
+cp ../haymod3e2/control_cs.sav .
+cp ../haymod3e2/thresholddistalamp300_cs0_comb3.sav thresholddistalamp300_cs0_comb.sav
+cp ../haymod3e2/ppispthrcoeff300_relthr_scaledonly_cs0_comb3_iiter0.sav ppispthrcoeff300_relthr_scaledonly_cs0_comb_iiter0.sav
+cp ../haymod3e2/ppispthrcoeff300_relthr_scaledonly_cs0_comb3_iiter1.sav ppispthrcoeff300_relthr_scaledonly_cs0_comb_iiter1.sav
+cp ../haymod3e2/ppispthrcoeff300_relthr_scaledonly_cs0_comb3_iiter3.sav ppispthrcoeff300_relthr_scaledonly_cs0_comb_iiter3.sav
+cp ../haymod3e2/ppispthrcoeff300_relthr_scaledonly_cs0_comb3_iiter4.sav ppispthrcoeff300_relthr_scaledonly_cs0_comb_iiter4.sav
+cp ../haymod3e2/ppispthrcoeff300_relthr_scaledonly_cs0_comb3_iiter5.sav ppispthrcoeff300_relthr_scaledonly_cs0_comb_iiter5.sav

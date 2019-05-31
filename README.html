@@ -1,0 +1,49 @@
+<html>
+  This is the readme for the models associated with the paper:<p/>
+  <p style="margin-left: 40px">
+    Mäki-Marttunen T, Krull F, Bettella F, Hagen E, Næss S, Ness TV,
+  Moberget T, Elvsåshagen T, Metzner C, Devor A, Edwards AG, Fyhn M,
+  Djurovic S, Dale AM, Andreassen OA, Einevoll GT (2018) Alterations
+  in schizophrenia-associated genes can lead to increased power in
+  delta oscillations. Cerebral Cortex
+  </p><p/>
+  This code was contributed by Tuomo Maki-Marttunen, 2015-2018 with the license: <a href="https://creativecommons.org/licenses/by/4.0/legalcode">CC BY 4.0</a>
+<p/>
+    Python and NEURON scripts (NEURON is freely available from <a href="http://neuron.yale.edu">https://neuron.yale.edu</a>) for running network simulations of layer V pyramidal cells (L5PCs). This ModelDB entry includes two directories each of which contains a readme with usage instructions:
+  <p/>
+<pre>
+approxhaynet # The main directory with the Python and HOC scripts for simulating the network of L5PCs. Includes files for simulations
+             # with both stationary and oscillatory Poisson background inputs.
+haymod       # An auxiliary directory with similar content as our ModelDB entry 169457. Includes scripts for scaling the variants,
+             # calculating the f-I curves and prepulse-inhibition windows
+</pre>
+<p/>
+The codes have been tested on macOS 10.13.3 running Python 2.7.14 and NEURON 7.5 and Linux 2.6.32-696.18.7.el6.centos.plus.x86_64
+running Python 2.7.3, NEURON 7.4 and 7.5 (the LFP simulations cannot be run using NEURON 7.4), and mpirun (Open MPI) 1.6.2.
+<p/>
+The reduced-morphology L5PC model is based on
+<p style="margin-left: 40px">
+Maki-Marttunen et al. 2018 "A stepwise neuron model fitting procedure
+designed for recordings with high spatial resolution: Application to
+layer 5 pyramidal cells", J Neurosci Methods. Jan 1;293:264-283
+</p>
+<p/>
+HOC-commands for simulations including in vivo-like synaptic firing based on
+<p style="margin-left: 40px">
+  Hay & Segev 2015, "Dendritic excitability and gain control in recurrent cortical microcircuits", Cerebral Cortex 25(10): 3561-3571
+  </p>
+<p/>
+and the full-morphology model is based on
+<p style="margin-left: 40px">
+Hay et al. 2011, "Models of neocortical layer 5b pyramidal cells
+capturing a wide range of dendritic and perisomatic active
+properties", PLoS Comput Biol 7:e1002107
+</p><p/>
+  Library of variants based on
+<p style="margin-left: 40px">
+Maki-Marttunen et al. 2016, "Functional Effects of
+Schizophrenia-Linked Genetic Variants on Intrinsic Single-Neuron
+Excitability: A Modeling Study", Biol Psychiatry Cogn Neurosci
+Neuroimaging. Jan 1;1(1):49-59.
+</p>
+</html>
